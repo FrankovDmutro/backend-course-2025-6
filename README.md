@@ -80,6 +80,16 @@ nodemon main.js -- --host localhost --port 3000 --cache ./cache
 - `http://localhost:3000/RegisterForm.html`
 - `http://localhost:3000/SearchForm.html`
 
+## Swagger
+
+Інтерактивна документація API доступна за адресою:
+- `http://localhost:3000/api-docs`
+
+Через Swagger UI можна:
+- переглядати всі endpoint-и;
+- дивитися приклади payload;
+- тестувати запити прямо з браузера (`Try it out`).
+
 ## Команди для перевірки API (Windows PowerShell / CMD)
 
 Нижче послідовний сценарій перевірки. Запускайте, коли сервер уже працює.
@@ -127,18 +137,18 @@ curl -X PUT http://localhost:3000/inventory/<ID> ^
   -d "{\"name\":\"Laptop Pro\",\"description\":\"Updated\"}"
 ```
 
-7. Пошук через GET:
-
-```bash
-curl "http://localhost:3000/search?id=<ID>&includePhoto=true"
-```
-
-8. Пошук через POST (сумісність):
+7. Пошук через POST (вимога лабораторної):
 
 ```bash
 curl -X POST http://localhost:3000/search ^
   -H "Content-Type: application/x-www-form-urlencoded" ^
   -d "id=<ID>&has_photo=true"
+```
+
+8. Додаткова сумісність: пошук через GET (опційно):
+
+```bash
+curl "http://localhost:3000/search?id=<ID>&includePhoto=true"
 ```
 
 9. Оновити фото:
@@ -192,12 +202,39 @@ curl http://localhost:3000/inventory/<ID>
 7. `DELETE /inventory/:id`
 - `200 OK` або `404 Not found`.
 
-8. `GET /search?id=<id>&includePhoto=true`
-- `200 OK` або `404 Not Found`.
-
-9. `POST /search`
+8. `POST /search`
 - `application/x-www-form-urlencoded`: `id`, `has_photo=true`.
 - `200 OK` або `404 Not Found`.
+
+9. `GET /search?id=<id>&includePhoto=true` (додатково)
+- `200 OK` або `404 Not Found`.
+
+## Postman
+
+У репозиторій додано готову колекцію:
+- `collection.json`
+
+Що робити:
+1. Відкрий Postman.
+2. `Import` -> обери файл `collection.json`.
+3. Задай значення змінних `baseUrl`, `itemId`, `photoPath`, `newPhotoPath`.
+4. Запускай запити по черзі для перевірки всіх вимог.
+
+## Відповідність вимогам (чекліст)
+
+- Реєстрація пристрою (`POST /register`, `multipart/form-data`) - виконано.
+- Список інвентарю (`GET /inventory`) - виконано.
+- Отримання речі (`GET /inventory/:id`) - виконано.
+- Оновлення даних (`PUT /inventory/:id`, JSON) - виконано.
+- Отримання фото (`GET /inventory/:id/photo`, `Content-Type: image/jpeg`) - виконано.
+- Оновлення фото (`PUT /inventory/:id/photo`) - виконано.
+- Видалення (`DELETE /inventory/:id`) - виконано.
+- Пошук з форми (`POST /search`, `x-www-form-urlencoded`, `id`, `has_photo`) - виконано.
+- Форма реєстрації (`GET /RegisterForm.html`) - виконано.
+- Форма пошуку (`GET /SearchForm.html`) - виконано.
+- Невідомий/непідтримуваний метод -> `405 Method not allowed` - виконано.
+- Успішні запити мають `200`, `POST /register` має `201` - виконано.
+- Postman collection (`collection.json`) у репозиторії - виконано.
 
 ## Нотатки
 
