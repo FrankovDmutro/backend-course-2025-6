@@ -1,150 +1,206 @@
 # backend-course-2025-6
 
-Невеликий Express-сервер для інвентаризації пристроїв з підтримкою реєстрації, пошуку, оновлення та видалення записів, а також завантаження фото.
+Express-сервер для інвентаризації пристроїв з підтримкою CRUD-операцій, пошуку та завантаження фото.
 
-## Швидкий старт
+## Поточна структура проєкту
+
+```text
+backend-course-2025-6/
+├─ app.js
+├─ main.js
+├─ package.json
+├─ RegisterForm.html
+├─ SearchForm.html
+├─ cache/
+├─ config/
+│  ├─ cli.js
+│  └─ upload.js
+├─ routes/
+│  ├─ inventoryRoutes.js
+│  ├─ searchRoutes.js
+│  └─ staticRoutes.js
+├─ store/
+│  └─ inventoryStore.js
+└─ utils/
+   └─ photoUrl.js
+```
+
+## Що за що відповідає
+
+- `main.js` - точка входу, читає CLI-параметри, створює app, запускає сервер.
+- `app.js` - збирає Express-додаток, підключає middleware та роутери.
+- `config/cli.js` - обробка параметрів `--host`, `--port`, `--cache`, створення cache-директорії.
+- `config/upload.js` - конфігурація `multer` для завантаження фото.
+- `routes/inventoryRoutes.js` - `/inventory`, `/register`, операції з фото та видалення.
+- `routes/searchRoutes.js` - пошук пристрою (`GET /search`, `POST /search`).
+- `routes/staticRoutes.js` - віддача HTML-форм.
+- `store/inventoryStore.js` - in-memory сховище інвентарю.
+- `utils/photoUrl.js` - генерація URL для фото.
+
+## Встановлення і запуск
 
 1. Встановіть залежності:
 
+```bash
 npm install
+```
 
-2. Запустіть сервер у dev-режимі (nodemon):
+2. Запуск у dev-режимі:
 
+```bash
 npm run dev
+```
 
-3. Або запустіть сервер без nodemon:
+3. Запуск без nodemon:
 
+```bash
 npm start
+```
 
-Сервер за замовчуванням запускається на:
-- host: localhost
-- port: 3000
-- cache: ./cache
+Значення за замовчуванням у `npm start`:
+- `host`: `localhost`
+- `port`: `3000`
+- `cache`: `./cache`
 
-## Запуск з власними параметрами
+## Запуск із власними параметрами
 
+```bash
 node main.js --host 127.0.0.1 --port 4000 --cache ./cache
+```
 
-Важливо: якщо запускаєте через nodemon і передаєте параметри додатку, перед ними має бути --
+Якщо передаєте параметри додатку через `nodemon`, обов'язково ставте `--` перед аргументами програми:
 
-Приклад:
-
+```bash
 nodemon main.js -- --host localhost --port 3000 --cache ./cache
+```
 
-## HTML-сторінки
+## HTML-форми
 
-Після запуску доступні:
-- http://localhost:3000/RegisterForm.html
-- http://localhost:3000/SearchForm.html
+Після запуску:
+- `http://localhost:3000/RegisterForm.html`
+- `http://localhost:3000/SearchForm.html`
 
-## Endpoint-и
+## Команди для перевірки API (Windows PowerShell / CMD)
 
-### 1) Отримати весь список
+Нижче послідовний сценарій перевірки. Запускайте, коли сервер уже працює.
 
-- Method: GET
-- URL: /inventory
-- Response: 200 OK, масив об'єктів
+1. Перевірити, що список порожній/доступний:
 
-Приклад:
-
+```bash
 curl http://localhost:3000/inventory
+```
 
-### 2) Зареєструвати новий пристрій
+2. Створити пристрій без фото:
 
-- Method: POST
-- URL: /register
-- Content-Type: multipart/form-data
-- Поля:
-  - inventory_name (required)
-  - description (optional)
-  - photo (optional, file)
-- Response: 201 Created, створений об'єкт
-
-Приклад:
-
+```bash
 curl -X POST http://localhost:3000/register ^
   -F "inventory_name=Laptop" ^
-  -F "description=Office device" ^
+  -F "description=Office device"
+```
+
+3. Створити пристрій з фото:
+
+```bash
+curl -X POST http://localhost:3000/register ^
+  -F "inventory_name=Phone" ^
+  -F "description=With photo" ^
   -F "photo=@C:/path/to/photo.jpg"
+```
 
-### 3) Отримати елемент за ID
+4. Отримати список і скопіювати `id` потрібного елемента:
 
-- Method: GET
-- URL: /inventory/:id
-- Response: 200 OK або 404 Not found
+```bash
+curl http://localhost:3000/inventory
+```
 
-Приклад:
+5. Отримати елемент за `id`:
 
-curl http://localhost:3000/inventory/1741760000000
+```bash
+curl http://localhost:3000/inventory/<ID>
+```
 
-### 4) Оновити назву або опис
+6. Оновити назву/опис:
 
-- Method: PUT
-- URL: /inventory/:id
-- Content-Type: application/json або x-www-form-urlencoded
-- Поля:
-  - name (optional)
-  - description (optional)
-- Response: 200 OK або 404 Not found
-
-Приклад:
-
-curl -X PUT http://localhost:3000/inventory/1741760000000 ^
+```bash
+curl -X PUT http://localhost:3000/inventory/<ID> ^
   -H "Content-Type: application/json" ^
   -d "{\"name\":\"Laptop Pro\",\"description\":\"Updated\"}"
+```
 
-### 5) Отримати фото
+7. Пошук через GET:
 
-- Method: GET
-- URL: /inventory/:id/photo
-- Response: 200 OK (image/jpeg) або 404 Not found
+```bash
+curl "http://localhost:3000/search?id=<ID>&includePhoto=true"
+```
 
-Приклад:
+8. Пошук через POST (сумісність):
 
-curl http://localhost:3000/inventory/1741760000000/photo --output photo.jpg
-
-### 6) Оновити фото
-
-- Method: PUT
-- URL: /inventory/:id/photo
-- Content-Type: multipart/form-data
-- Поля:
-  - photo (required, file)
-- Response: 200 OK або 404 Not found
-
-Приклад:
-
-curl -X PUT http://localhost:3000/inventory/1741760000000/photo ^
-  -F "photo=@C:/path/to/new-photo.jpg"
-
-### 7) Видалити елемент
-
-- Method: DELETE
-- URL: /inventory/:id
-- Response: 200 OK або 404 Not found
-
-Приклад:
-
-curl -X DELETE http://localhost:3000/inventory/1741760000000
-
-### 8) Пошук за ID
-
-Підтримуються обидва варіанти:
-- GET /search?id=<id>&includePhoto=true
-- POST /search (body: id, has_photo=true)
-
-Response: 200 OK або 404 Not Found
-
-Приклади:
-
-curl "http://localhost:3000/search?id=1741760000000&includePhoto=true"
-
+```bash
 curl -X POST http://localhost:3000/search ^
   -H "Content-Type: application/x-www-form-urlencoded" ^
-  -d "id=1741760000000&has_photo=true"
+  -d "id=<ID>&has_photo=true"
+```
+
+9. Оновити фото:
+
+```bash
+curl -X PUT http://localhost:3000/inventory/<ID>/photo ^
+  -F "photo=@C:/path/to/new-photo.jpg"
+```
+
+10. Отримати фото:
+
+```bash
+curl http://localhost:3000/inventory/<ID>/photo --output downloaded-photo.jpg
+```
+
+11. Видалити елемент:
+
+```bash
+curl -X DELETE http://localhost:3000/inventory/<ID>
+```
+
+12. Перевірити, що після видалення повертається 404:
+
+```bash
+curl http://localhost:3000/inventory/<ID>
+```
+
+## Коротка специфіка endpoint-ів
+
+1. `GET /inventory`
+- `200 OK`, масив елементів.
+
+2. `POST /register`
+- `multipart/form-data`: `inventory_name` (required), `description` (optional), `photo` (optional).
+- `201 Created` або `400 Bad Request`.
+
+3. `GET /inventory/:id`
+- `200 OK` або `404 Not found`.
+
+4. `PUT /inventory/:id`
+- body: `name` та/або `description`.
+- `200 OK` або `404 Not found`.
+
+5. `GET /inventory/:id/photo`
+- `200 OK` (image/jpeg) або `404 Not found`.
+
+6. `PUT /inventory/:id/photo`
+- `multipart/form-data`, поле `photo`.
+- `200 OK` або `404 Not found`.
+
+7. `DELETE /inventory/:id`
+- `200 OK` або `404 Not found`.
+
+8. `GET /search?id=<id>&includePhoto=true`
+- `200 OK` або `404 Not Found`.
+
+9. `POST /search`
+- `application/x-www-form-urlencoded`: `id`, `has_photo=true`.
+- `200 OK` або `404 Not Found`.
 
 ## Нотатки
 
 - Дані інвентарю зберігаються в пам'яті процесу (після перезапуску сервера список очищається).
-- Фото зберігаються у директорії cache.
-- Для невідомих маршрутів сервер повертає 405 Method not allowed.
+- Фото зберігаються в директорії `cache`.
+- Для невідомих маршрутів повертається `405 Method not allowed`.
