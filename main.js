@@ -130,19 +130,23 @@ app.delete('/inventory/:id', (req, res) => {
 });
 
 // 8. Пошук пристрою за ID [cite: 70, 71]
-app.post('/search', (req, res) => {
-    const { id, has_photo } = req.body; // [cite: 76, 77]
+const handleSearch = (source, res) => {
+    const id = source.id;
+    const includePhoto = source.includePhoto || source.has_photo;
     const item = inventory.find(i => i.id === id);
 
     if (!item) return res.status(404).send('Not Found'); // [cite: 78]
 
-    let responseData = { ...item };
-    if (has_photo === 'true' || has_photo === 'on') {
+    const responseData = { ...item };
+    if (includePhoto === 'true' || includePhoto === 'on' || includePhoto === true || includePhoto === '1') {
         responseData.photo_link = `http://${host}:${port}/inventory/${id}/photo`; // [cite: 26, 77]
     }
 
-    res.status(200).json(responseData);
-});
+    return res.status(200).json(responseData);
+};
+
+app.get('/search', (req, res) => handleSearch(req.query, res));
+app.post('/search', (req, res) => handleSearch(req.body, res));
 
 // Обробка статичних файлів (HTML форми) [cite: 61, 64]
 app.get('/RegisterForm.html', (req, res) => res.sendFile(path.resolve('RegisterForm.html')));
