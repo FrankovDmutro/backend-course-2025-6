@@ -1,4 +1,37 @@
-const inventory = [];
+const fs = require('fs');
+const path = require('path');
+
+let inventory = [];
+let dataFilePath = null;
+
+// Допоміжна функція для збереження в JSON
+function saveToFile() {
+    if (!dataFilePath) return;
+    try {
+        fs.writeFileSync(dataFilePath, JSON.stringify(inventory, null, 2));
+    } catch (error) {
+        console.error('Помилка при збереженні даних:', error.message);
+    }
+}
+
+// Ініціалізація: прочитати дані з файлу
+function initialize(filePath) {
+    dataFilePath = filePath;
+    try {
+        if (fs.existsSync(filePath)) {
+            const data = fs.readFileSync(filePath, 'utf-8');
+            inventory = JSON.parse(data) || [];
+            console.log(`✓ Дані завантажені з ${filePath}`);
+        } else {
+            inventory = [];
+            saveToFile();
+            console.log(`✓ Новий файл даних створений: ${filePath}`);
+        }
+    } catch (error) {
+        console.error(`Помилка при завантаженні даних: ${error.message}`);
+        inventory = [];
+    }
+}
 
 function getAll() {
     return inventory;
@@ -17,6 +50,7 @@ function addItem({ name, description = '', photo = null }) {
     };
 
     inventory.push(newItem);
+    saveToFile();
     return newItem;
 }
 
@@ -27,6 +61,7 @@ function updateItem(id, { name, description }) {
     if (name) item.name = name;
     if (description) item.description = description;
 
+    saveToFile();
     return item;
 }
 
@@ -35,6 +70,7 @@ function updatePhoto(id, photoFilename) {
     if (!item) return null;
 
     item.photo = photoFilename;
+    saveToFile();
     return item;
 }
 
@@ -44,10 +80,12 @@ function removeItem(id) {
 
     const deleted = inventory[index];
     inventory.splice(index, 1);
+    saveToFile();
     return deleted;
 }
 
 module.exports = {
+    initialize,
     getAll,
     findById,
     addItem,
