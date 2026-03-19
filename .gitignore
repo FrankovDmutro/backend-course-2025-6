@@ -1,2 +1,4 @@
 node_modules/
-chache/
+dist/
+cache/
+data.json
