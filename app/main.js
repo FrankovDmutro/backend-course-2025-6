@@ -1,7 +1,7 @@
-const getServerConfig = require('./config/cli');
-const createUpload = require('./config/upload');
-const createApp = require('./app');
-const inventoryStore = require('./store/inventoryStore');
+const getServerConfig = require('../back/config/cli');
+const createUpload = require('../back/config/upload');
+const createApp = require('../back/app');
+const inventoryStore = require('../back/store/inventoryStore');
 
 const { host, port, cache } = getServerConfig();
 const upload = createUpload(cache);
